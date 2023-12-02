@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
-int* cScan( int noOfJobs, int* jobs){
+#include <time.h>
+
+int* cscan( int noOfJobs, int* jobs){
     int* order = (int*)malloc((noOfJobs+1)*sizeof(int));
     if(order == NULL){
         return NULL;
@@ -17,23 +19,28 @@ int* cScan( int noOfJobs, int* jobs){
                 order[noOfJobs-jobsLeft] = jobs[i];
                 jobs[i] = -1;
                 jobsLeft -= 1;
+                
             }
         }
-        
+
         if(head >= 199){
             head = 0;
+            tracksTraversed+=198;
         }
         else{
             head += 1;
         }
     }
     order[noOfJobs] = tracksTraversed;
+    
     return order;
 }
 
 int* scan(int noOfJobs, int* jobs){ // this works
     //+1 because the last element in the array will be the tracks traversed
+
     int* order = (int*)malloc((noOfJobs+1)*sizeof(int));
+    
     if(order == NULL){
         return NULL;
     }
@@ -68,9 +75,62 @@ int* scan(int noOfJobs, int* jobs){ // this works
     return order;
 }
 
+void compareFairness(int* scan, int* cscan, int* fcfs, int length){
+    int maxDelayS=0;
+    int maxDelayC=0;
+    int sumScan=0;
+    int sumCscan=0;
+    int numOfdelayScan=0;
+    int numOfdelayCscan=0;
+    
+    for(int i=0; i<length;i++){
+        for(int j=0; j<length;j++){
+            if(fcfs[j]==scan[i]){
+                if(i-j>0){
+                    sumScan+=i-j;
+                    numOfdelayScan++;
+                    if(i-j>maxDelayS){
+                        maxDelayS=i-j;
+                    }
+                }
+                
+            }
+        }
+    }
+
+    for(int i=0; i<length;i++){
+        for(int j=0; j<length;j++){
+            if(fcfs[j]==cscan[i]){
+                if(i-j>0){
+                    sumCscan+=i-j;
+                    numOfdelayCscan++;
+                    if(i-j>maxDelayC){
+                        maxDelayC=i-j;
+                    }
+                }
+                
+              
+            }
+        }
+    }
+
+    printf("%d\n", sumScan);
+    printf("%d\n", sumCscan);
+    printf("Scan avg delay: %d\n", (int)(sumScan/numOfdelayScan));
+    printf("CSCAN avg delay: %d\n", (int)(sumCscan/numOfdelayCscan));
+    printf("Max SCAN delay: %d\n", maxDelayS);
+    printf("Max CSCAN delay: %d\n", maxDelayC);
+    
+}
+
 int main(int argc, char* argv[]){
+    srand(time(NULL));
     int* jobs;
-    int* jobsCopy; //since the original jobs array is destroyed due to the design, make a copy so we can print out the original
+    int* jobsCopy;
+    int* jobsCompare;
+    int* test; 
+    int* testc;
+    //since the original jobs array is destroyed due to the design, make a copy so we can print out the original
     //and also calculate delay
 
     //if user inputs arguments
@@ -88,54 +148,116 @@ int main(int argc, char* argv[]){
             printf("Memory allocation failed.\n");
             return 1;
         }
+        jobsCompare = (int*)malloc((argc-1)*sizeof(int));
+        if(jobsCompare == NULL){
+            printf("Memory allocation failed.\n");
+            return 1;
+        }
         for(int i = 1; i < argc; i++){
             jobs[i-1] = atoi(argv[i]);
             jobsCopy[i-1] = atoi(argv[i]);
+            jobsCompare[i-1] = atoi(argv[i]);
         }
+        printf("original array\n");
+        for(int i = 0; i < argc-1; i++){
+            printf("%d ", jobsCompare[i]);
+            if(i%10==0){
+                printf("\n");
+            }
+        }
+        printf("\n");
 
-        int* test = scan(argc-1, jobs);
+        test = scan(argc-1, jobs);
+        testc = cscan(argc-1, jobsCopy);
         printf("order visited: ");
         for(int i = 0; i < argc-1; i++){
-            printf("%d ", test[i]);
+            printf("%d\t", test[i]);
+            if(i%10==0){
+                printf("\n");
+            }
         }
         printf("\n");
         printf("tracks traversed: %d\n", test[argc-1]);
-        /* prints original array
+        
+        printf("order visited: ");
         for(int i = 0; i < argc-1; i++){
-            printf("%d ", stupidJobs[i]);
+            printf("%d\t", testc[i]);
+            if(i%10==0){
+                printf("\n");
+            }
         }
-        */
+        printf("\n");
+        printf("tracks traversed: %d\n", testc[argc-1]);
+        
+        compareFairness(test, testc, jobsCompare, argc-1);
     }
     //else we just make a random list
     else if(argc == 1){
+        
         jobs = (int*)malloc(50*sizeof(int));
         if(jobs == NULL){
             printf("Memory allocation failed.\n");
             return 1;
         }
 
-        jobsCopy = (int*)malloc((argc-1)*sizeof(int));
+        jobsCopy = (int*)malloc(50*sizeof(int));
         if(jobsCopy == NULL){
+            printf("Memory allocation failed.\n");
+            return 1;
+        }
+        jobsCompare = (int*)malloc(50*sizeof(int));
+        if(jobsCompare == NULL){
             printf("Memory allocation failed.\n");
             return 1;
         }
         for(int i = 0; i < 50; i++){
             jobs[i] = rand()%200;
             jobsCopy[i] = jobs[i];
+            jobsCompare[i]=jobs[i];
         }
-        int* test = scan(50, jobs);
-        printf("order visited: ");
-        for(int i = 0; i < 50; i++){
-            printf("%d ", test[i]);
+        printf("original array\n");
+        for(int i = 0; i < argc-1; i++){
+            printf("%d ", jobsCompare[i]);
+            if(i%10==0){
+                printf("\n");
+            }
         }
         printf("\n");
-        printf("tracks traversed: %d\n", test[50]);
+        test = scan(50, jobs);
+        testc = cscan(50, jobsCopy);
+        printf("SCAN order visited: ");
+        for(int i = 0; i < 50; i++){
+            printf("%d\t", test[i]);
+            if(i%10==0){
+                printf("\n");
+            }
+        }
+        printf("\n");
+        printf("SCAN tracks traversed: %d\n", test[50]);
+
+        printf("\n");
+        printf("CSCAN order visited: ");
+        for(int i = 0; i < 50; i++){
+            printf("%d\t", testc[i]);
+            if(i%10==0){
+                printf("\n");
+            }
+        }
+        printf("\n");
+        printf("CSCAN tracks traversed: %d\n", testc[50]);
+        
         /*
         printf("\n");
         for(int i = 0; i < 50; i++){
             printf("%d ", stupidJobs[i]);
         }
         */
+        
+        compareFairness(test, testc, jobsCompare,49);
     }
-    
+    free(jobs);
+    free(jobsCopy);
+    free(test);
+    free(testc);
+
 }
