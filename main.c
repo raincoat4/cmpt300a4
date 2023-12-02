@@ -2,6 +2,34 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+int* cScan( int noOfJobs, int* jobs){
+    int* order = (int*)malloc((noOfJobs+1)*sizeof(int));
+    if(order == NULL){
+        return NULL;
+    }
+    int jobsLeft = noOfJobs;
+    int head = jobs[0];
+    int tracksTraversed = 0;
+    while(jobsLeft > 0){
+        tracksTraversed += 1;
+        for(int i = 0; i < noOfJobs; i++){
+            if(head == jobs[i]){
+                order[noOfJobs-jobsLeft] = jobs[i];
+                jobs[i] = -1;
+                jobsLeft -= 1;
+            }
+        }
+        
+        if(head >= 199){
+            head = 0;
+        }
+        else{
+            head += 1;
+        }
+    }
+    order[noOfJobs] = tracksTraversed;
+    return order;
+}
 
 int* scan(int noOfJobs, int* jobs){ // this works
     //+1 because the last element in the array will be the tracks traversed
